@@ -41,17 +41,17 @@ sub empty: Tests {
     ok(!$q->is_singleton);
 
     my @a = $q->to_ordered_list;
-    is($#a + 1, 0);
+    is(scalar @a, 0);
 
     # singleton queue
-    my $r = $q->insert('test', 0);
-    isa_ok($r, 'Data::PSQueue::PSQ::Winner');
-    ok(!$r->is_empty);
-    ok($r->is_singleton);
+    my $q->insert('test', 0);
+    isa_ok($q, 'Data::PSQueue::PSQ::Winner');
+    ok(!$q->is_empty);
+    ok($q->is_singleton);
 
-    my @b = $r->to_ordered_list;
-    is(scalar @b, 1);
-    isa_ok($b[0], 'Data::PSQueue::Binding');    
+    @a = $q->to_ordered_list;
+    is(scalar @a, 1);
+    isa_ok($a[0], 'Data::PSQueue::Binding');
 }
 
 sub singleton: Tests {
@@ -69,14 +69,14 @@ sub singleton: Tests {
 }
 
 sub tournament: Tests {
-    my $q = Data::PSQueue->singleton("Nigel", 7)
-                   ->insert("Doaitse", 2)
-                   ->insert("Lambert", 3)
-                   ->insert("Ade", 4)
-                   ->insert("Vladimir", 8)
-                   ->insert("Elco", 1)
-                   ->insert("Johan", 6)
-                   ->insert("Piet", 5);
+    my $q = Data::PSQueue->singleton("Nigel", 7);
+    $q->insert("Doaitse", 2);
+    $q->insert("Lambert", 3);
+    $q->insert("Ade", 4);
+    $q->insert("Vladimir", 8);
+    $q->insert("Elco", 1);
+    $q->insert("Johan", 6);
+    $q->insert("Piet", 5);
 
     my $min = $q->find_min;
     is($min->key, "Elco");
@@ -87,7 +87,9 @@ sub tournament: Tests {
     is($a[0]->key, "Ade");
     is($a[0]->prio, 4);
 
-    $q = $q->delete_min;
+    $min = $q->delete_min;
+    is($min->key, "Elco");
+    is($min->prio, 1);
 
     $min = $q->find_min;
     is($min->key, "Doaitse");
@@ -111,7 +113,7 @@ sub key_conditions: Tests {
 sub finate_map_conditions: Tests {
     my $q = Data::PSQueue->empty;
     for (my $i = 0; $i < 100; $i++) {
-        $q = $q->insert(int(rand($i * 100)), int(rand($i * 1000)));
+        $q->insert(int(rand($i * 100)), int(rand($i * 1000)));
     }
 
     my %visited;
