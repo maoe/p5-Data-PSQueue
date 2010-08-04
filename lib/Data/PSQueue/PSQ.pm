@@ -77,6 +77,10 @@ sub is_singleton {
     0;
 }
 
+sub size {
+    0;
+}
+
 # Play a match
 sub play {
     my ($self, $queue) = @_;
@@ -147,6 +151,11 @@ sub is_empty {
 sub is_singleton {
     my $self = shift;
     defined $self->binding && $self->ltree->isa('Data::PSQueue::LTree::Start');
+}
+
+sub size {
+    my $self = shift;
+    $self->ltree->size + 1;
 }
 
 # Play a match

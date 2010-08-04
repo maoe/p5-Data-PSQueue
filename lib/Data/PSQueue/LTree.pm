@@ -24,6 +24,9 @@ sub is_empty {
     1;
 }
 
+sub size {
+    0;
+}
 
 package Data::PSQueue::LTree::Loser;
 use strict;
@@ -44,6 +47,11 @@ sub new {
 
 sub is_empty {
     0;
+}
+
+sub size {
+    my $self = shift;
+    $self->left->size + $self->right->size + 1;
 }
 
 1;
