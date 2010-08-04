@@ -284,7 +284,7 @@ sub lookup {
         # lookup k {b}
         if ($compare->($key, $self->binding->key) == 0) {
             # | k == key b = Just (prio b)
-            $self->prio;
+            $self->binding->prio;
         } else {
             # | otherwise  = Nothing
             undef;
