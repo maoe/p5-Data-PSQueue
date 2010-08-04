@@ -2,6 +2,9 @@ package Data::PSQueue::PSQ;
 use strict;
 use warnings;
 use Data::PSQueue::LTree;
+use base qw(Class::Accessor::Fast);
+
+__PACKAGE__->mk_accessors(qw(binding ltree max_key));
 
 sub new {
     my $class = shift;
@@ -35,6 +38,25 @@ sub singleton {
     );
 }
 
+# internal method
+sub _transform_to {
+    my ($self, $object) = @_;
+    $self->binding($object->binding);
+    $self->ltree($object->ltree);
+    $self->max_key($object->max_key);
+
+    # rebless
+    bless $self, ref($object);
+}
+
+sub _transform_winner {
+    my ($self, $binding, $ltree, $max_key) = @_;
+    $self->binding($binding);
+    $self->ltree($ltree);
+    $self->max_key($max_key);
+    $self;
+}
+
 package Data::PSQueue::PSQ::Void;
 use strict;
 use warnings;
@@ -58,12 +80,12 @@ sub is_singleton {
 # Play a match
 sub play {
     my ($self, $queue) = @_;
-    $queue;
+    $self->_transform_to($queue) unless $queue->is_empty;
+    $self;
 }
 
 sub delete_min {
-    my $self = shift;
-    $self;
+    undef;
 }
 
 sub to_ordered_list {
@@ -82,13 +104,18 @@ sub adjust {
 sub insert {
     my ($self, $key, $prio) = @_;
 
-    Data::PSQueue::PSQ->singleton(
-        Data::PSQueue::Binding->new($key, $prio)
+    $self->_transform_to(
+        Data::PSQueue::PSQ->singleton(
+            Data::PSQueue::Binding->new($key, $prio)
+        )
     );
 }
 
 sub delete {
-    Data::PSQueue::PSQ->empty;
+    my $self = shift;
+    $self->_transform_to(
+        Data::PSQueue::PSQ->empty
+    );
 }
 
 sub find_min {
@@ -101,9 +128,8 @@ use warnings;
 use Scalar::Util qw(looks_like_number);
 use Switch;
 use UNIVERSAL::isa;
-use base qw(Data::PSQueue::PSQ Class::Accessor::Fast);
-
-__PACKAGE__->mk_accessors(qw(binding ltree max_key));
+use base qw(Data::PSQueue::PSQ);
+use Data::Dumper;
 
 sub new {
     my ($class, $binding, $ltree, $max_key) = @_;
@@ -130,7 +156,7 @@ sub play {
     if ($other->is_empty) {
         $self;
     } elsif ($self->binding->prio <= $other->binding->prio) {
-        Data::PSQueue::PSQ::Winner->new(
+        $self->_transform_winner(
             $self->binding,
             Data::PSQueue::LTree::Loser->new(
                 $other->binding,
@@ -141,7 +167,7 @@ sub play {
             $other->max_key
         );
     } else {
-        Data::PSQueue::PSQ::Winner->new(
+        $self->_transform_winner(
             $other->binding,
             Data::PSQueue::LTree::Loser->new(
                 $self->binding,
@@ -154,42 +180,46 @@ sub play {
     }
 }
 
-
 sub delete_min {
     my $self = shift;
+    my $min = $self->binding;
 
     if ($self->is_singleton) {
-        Data::PSQueue::PSQ->empty;
+        $self->_transform_to(Data::PSQueue::PSQ->empty);
     } else {
         my $ltree = $self->ltree;
         my $compare = $self->binding->compare;
 
-        if ($compare->($ltree->binding->key, $ltree->key)) {
-            Data::PSQueue::PSQ::Winner->new(
+        if ($compare->($ltree->binding->key, $ltree->key) <= 0) {
+            my $tr = Data::PSQueue::PSQ::Winner->new(
+                $self->binding,
+                $ltree->right,
+                $self->max_key
+            );
+            $tr->delete_min;
+
+            $self->_transform_winner(
                 $ltree->binding,
                 $ltree->left,
                 $ltree->key
-            )->play(
-                Data::PSQueue::PSQ::Winner->new(
-                    $self->binding,
-                    $ltree->right,
-                    $self->max_key
-                )
-            );
+            )->play($tr);
         } else {
-            Data::PSQueue::PSQ::Winner->new(
+            my $tr = Data::PSQueue::PSQ::Winner->new(
+                $ltree->binding,
+                $ltree->right,
+                $self->max_key
+            );
+
+            $self->_transform_winner(
                 $self->binding,
                 $ltree->left,
                 $ltree->key
-            )->delete_min->play(
-                Data::PSQueue::PSQ::Winner->new(
-                    $ltree->binding,
-                    $ltree->right,
-                    $self->max_key
-                )
-            );
+            )->delete_min;
+
+            $self->play($tr);
         }
     }
+    $min;
 }
 
 # Converts a queue into a list of bindings ordered by key
@@ -301,20 +331,24 @@ sub adjust {
         # adjust f k {b}
         if ($compare->($key, $self->binding->key) == 0) {
             # k == key b = {k :-> f (prio b)}
-            Data::PSQueue::PSQ->singleton(Data::PSQueue::Binding->new($key, $f->($self->binding->prio)));        
+            $self->binding->prio($f->($self->binding->prio));
+            $self->_transform_winner(
+                $self->binding,
+                Data::PSQueue::LTree::Start->new,
+                $self->binding->key
+            );
         } else {
             # otherwise  = {b}
             $self;
         }
     } else {
         my $ltree = $self->ltree;
-        my $tl;
         my $tr;
 
         # Winner b (Loser b' tl k tr) m
         if ($compare->($ltree->binding->key, $ltree->key) <= 0) {
             # Winner b' tl k `play` Winner b tr m
-            $tl = Data::PSQueue::PSQ::Winner->new(
+            $self->_transform_winner(
                 $ltree->binding,
                 $ltree->left,
                 $ltree->key
@@ -326,7 +360,7 @@ sub adjust {
             );
         } else {
             # Winner b tl k `play` Winner b' br m
-            $tl = Data::PSQueue::PSQ::Winner->new(
+            $self->_transform_winner(
                 $self->binding,
                 $ltree->left,
                 $ltree->key
@@ -339,12 +373,12 @@ sub adjust {
         }
 
         # lookup k (tl `play` tr)
-        if ($compare->($key, $tl->max_key) <= 0) {
+        if ($compare->($key, $self->max_key) <= 0) {
             # | k <= max-key tl = adjust f k tl `play` tr
-            $tl->adjust($f, $key)->play($tr);
+            $self->adjust($f, $key)->play($tr);
         } else {
             # | otherwise       = tl `play` adjust f k tr
-            $tl->play($tr->adjust($f, $key));
+            $self->play($tr->adjust($f, $key));
         }
     }
 }
@@ -360,11 +394,17 @@ sub insert {
         switch ($compare->($key, $self->binding->key)) {
             case -1 {
                 # | key b < key b' = {b} `play` {b'}
-                $ret = Data::PSQueue::PSQ->singleton($binding)->play($self);
+                $ret = $self->_transform_to(
+                    Data::PSQueue::PSQ->singleton($binding)->play($self)
+                );
             }
             case 0 {
                 # | key b == key b' = {b}
-                $ret = Data::PSQueue::PSQ->singleton($binding);
+                $ret = $self->_transform_winner(
+                    $binding,
+                    Data::PSQueue::LTree::Start->new,
+                    $binding->key
+                );
             }
             else {
                 # | key b > key b' = {b'} `play` {b}
@@ -407,10 +447,14 @@ sub insert {
         # insert b (tl `play` tr)
         if ($compare->($key, $tl->max_key) <= 0) {
             # | key b <= max-key tl = insert b tl `play` tr
-            $tl->insert($key, $prio)->play($tr);
+            $self->_transform_to(
+                $tl->insert($key, $prio)->play($tr)
+            );
         } else {
             # | otherwise           = tl `play` insert b tr
-            $tl->play($tr->insert($key, $prio));
+            $self->_transform_to(
+                $tl->play($tr->insert($key, $prio))
+            );
         }
     }
 }
@@ -423,7 +467,9 @@ sub delete {
         # delete k {b}
         if ($compare->($key, $self->binding->key) == 0) {
             # k == key b = empty
-            Data::PSQueue::PSQ->empty;
+            $self->_transform_to(
+                Data::PSQueue::PSQ->empty
+            );
         } else {
             # otherwise  = {b}
             $self;
@@ -463,10 +509,14 @@ sub delete {
         # delete k (tl `play` tr)
         if ($compare->($key, $tl->max_key) <= 0) {
             # | k <= max-key tl = delete k tl `play` tr
-            $tl->delete($key)->play($tr);
+            $self->_transform_to(
+                $tl->delete($key)->play($tr)
+            );
         } else {
             # | otherwise       = tl `play` delete k tr
-            $tl->play($tr->delete($key));
+            $self->_transform_to(
+                $tl->play($tr->delete($key))
+            );
         }
     }
 }
@@ -475,7 +525,6 @@ sub find_min {
     my $self = shift;
     $self->binding;
 }
-
 
 1;
 

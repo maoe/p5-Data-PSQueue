@@ -4,6 +4,7 @@ use warnings;
 use base qw(Test::Class);
 use Test::More;
 use Data::Dumper;
+$Data::Dumper::Indent = 1;
 
 BEGIN { use_ok('Data::PSQueue') }
 require_ok('Data::PSQueue');
@@ -44,7 +45,7 @@ sub empty: Tests {
     is(scalar @a, 0);
 
     # singleton queue
-    my $q->insert('test', 0);
+    $q->insert('test', 0);
     isa_ok($q, 'Data::PSQueue::PSQ::Winner');
     ok(!$q->is_empty);
     ok($q->is_singleton);
@@ -94,11 +95,23 @@ sub tournament: Tests {
     $min = $q->find_min;
     is($min->key, "Doaitse");
     is($min->prio, 2);
-    
+
     @a = $q->to_ordered_list;
     is(scalar @a, 7);
     is($a[0]->key, "Ade");
     is($a[0]->prio, 4);
+
+    $q->delete('Johan');
+    is($min->key, "Doaitse");
+    is($min->prio, 2);
+    @a = $q->to_ordered_list;
+    is(scalar @a, 6);
+    is($a[0]->key, "Ade");
+    is($a[0]->prio, 4);
+    for my $binding (@a) {
+        cmp_ok($binding->key, 'ne', 'Johan');
+    }
+    is($q->lookup('Johan'), undef);
 }
 
 sub semi_heap_conditions: Tests {
