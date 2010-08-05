@@ -41,6 +41,7 @@ sub empty: Tests {
     ok($q->is_empty);
     ok(!$q->is_singleton);
     is($q->size, 0);
+    is($q->lookup('dummy'), undef);
 
     my @a = $q->to_ordered_list;
     is(scalar @a, 0);
@@ -51,6 +52,7 @@ sub empty: Tests {
     ok(!$q->is_empty);
     ok($q->is_singleton);
     is($q->size, 1);
+    is($q->lookup('test'), 0);
 
     @a = $q->to_ordered_list;
     is(scalar @a, 1);
@@ -63,6 +65,8 @@ sub singleton: Tests {
     ok(!$q->is_empty);
     ok($q->is_singleton);
     is($q->size, 1);
+    is($q->lookup('test'), 0);
+    is($q->lookup('dummy'), undef);
     is_deeply($q, Data::PSQueue->empty->insert('test', 0));
     
     my @a = $q->to_ordered_list;
@@ -83,6 +87,8 @@ sub tournament: Tests {
     $q->insert("Piet", 5);
 
     is($q->size, 8);
+    is($q->lookup('Elco'), 1);
+    is($q->lookup('dummy'), undef);
 
     my $min = $q->find_min;
     is($min->key, "Elco");
@@ -97,6 +103,7 @@ sub tournament: Tests {
     is($min->key, "Elco");
     is($min->prio, 1);
     is($q->size, 7);
+    is($q->lookup('Elco'), undef);
 
     $min = $q->find_min;
     is($min->key, "Doaitse");

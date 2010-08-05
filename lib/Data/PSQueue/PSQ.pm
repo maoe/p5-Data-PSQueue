@@ -276,60 +276,66 @@ sub to_ordered_list {
     }
 }
 
+# O(log n)
 sub lookup {
     my ($self, $key) = @_;
     my $compare = $self->binding->compare;
+    my $cur = $self;
+    my $ret;
 
-    if ($self->is_singleton) {
-        # lookup k {b}
-        if ($compare->($key, $self->binding->key) == 0) {
-            # | k == key b = Just (prio b)
-            $self->binding->prio;
+    while (1) {
+        if ($cur->is_singleton) {
+            # lookup k {b}
+            if ($compare->($key, $cur->binding->key) == 0) {
+                # | k == key b = Just (prio b)
+                $ret = $cur->binding->prio;
+            } else {
+                # | otherwise  = Nothing
+                $ret = undef;
+            }
+            last;
         } else {
-            # | otherwise  = Nothing
-            undef;
-        }
-    } else {
-        my $ltree = $self->ltree;
-        my $tl;
-        my $tr;
+            my $ltree = $cur->ltree;
+            my $tl;
+            my $tr;
 
-        # Winner b (Loser b' tl k tr) m
-        if ($compare->($ltree->binding->key, $ltree->key) <= 0) {
-            # Winner b' tl k `play` Winner b tr m
-            $tl = Data::PSQueue::PSQ::Winner->new(
-                $ltree->binding,
-                $ltree->left,
-                $ltree->key
-            );
-            $tr = Data::PSQueue::PSQ::Winner->new(
-                $self->binding,
-                $ltree->right,
-                $self->max_key
-            );
-        } else {
-            # Winner b tl k `play` Winner b' br m
-            $tl = Data::PSQueue::PSQ::Winner->new(
-                $self->binding,
-                $ltree->left,
-                $ltree->key
-            );
-            $tr = Data::PSQueue::PSQ::Winner->new(
-                $ltree->binding,
-                $ltree->right,
-                $self->max_key
-            );
-        }
-
-        # lookup k (tl `play` tr)
-        if ($compare->($key, $tl->max_key) <= 0) {
-            # | k <= max-key tl = lookup k tl
-            $tl->lookup($key);
-        } else {
-            # | otherwise       = lookup k tr
-            $tr->lookup($key);
+            # Winner b (Loser b' tl k tr) m
+            if ($compare->($ltree->binding->key, $ltree->key) <= 0) {
+                # Winner b' tl k `play` Winner b tr m
+                $tl = Data::PSQueue::PSQ::Winner->new(
+                    $ltree->binding,
+                    $ltree->left,
+                    $ltree->key
+                );
+                $tr = Data::PSQueue::PSQ::Winner->new(
+                    $cur->binding,
+                    $ltree->right,
+                    $cur->max_key
+                );
+            } else {
+                # Winner b tl k `play` Winner b' br m
+                $tl = Data::PSQueue::PSQ::Winner->new(
+                    $cur->binding,
+                    $ltree->left,
+                    $ltree->key
+                );
+                $tr = Data::PSQueue::PSQ::Winner->new(
+                    $ltree->binding,
+                    $ltree->right,
+                    $cur->max_key
+                );
+            }
+            # lookup k (tl `play` tr)
+            if ($compare->($key, $tl->max_key) <= 0) {
+                # | k <= max-key tl = lookup k tl
+                $cur = $tl;
+            } else {
+                # | otherwise       = lookup k tr
+                $cur = $tr;
+            }
         }
     }
+    $ret;
 }
 
 sub adjust {
