@@ -33,7 +33,7 @@ use strict;
 use warnings;
 use base qw(Data::PSQueue::LTree Class::Accessor::Fast);
 
-__PACKAGE__->mk_accessors(qw(binding left key right));
+__PACKAGE__->mk_accessors(qw(binding left key right size));
 
 sub new {
     my ($class, $binding, $left, $key, $right) = @_;
@@ -42,16 +42,12 @@ sub new {
     $self->left($left);
     $self->key($key);
     $self->right($right);
+    $self->size($left->size + $right->size + 1);
     $self;
 }
 
 sub is_empty {
     0;
-}
-
-sub size {
-    my $self = shift;
-    $self->left->size + $self->right->size + 1;
 }
 
 1;
