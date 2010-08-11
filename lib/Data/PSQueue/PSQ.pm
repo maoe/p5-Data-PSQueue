@@ -2,7 +2,7 @@ package Data::PSQueue::PSQ;
 use strict;
 use warnings;
 use Data::PSQueue::LTree;
-use base qw(Class::Accessor::Fast);
+use base qw(Class::Accessor::Fast::XS);
 
 __PACKAGE__->mk_accessors(qw(binding ltree max_key));
 

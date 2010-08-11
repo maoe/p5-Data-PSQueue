@@ -2,7 +2,7 @@ package Data::PSQueue::Binding;
 use strict;
 use warnings;
 use Scalar::Util qw(looks_like_number);
-use base qw(Class::Accessor::Fast);
+use base qw(Class::Accessor::Fast::XS);
 
 __PACKAGE__->mk_accessors(qw(key prio compare));
 

@@ -31,7 +31,7 @@ sub size {
 package Data::PSQueue::LTree::Loser;
 use strict;
 use warnings;
-use base qw(Data::PSQueue::LTree Class::Accessor::Fast);
+use base qw(Data::PSQueue::LTree Class::Accessor::Fast::XS);
 
 __PACKAGE__->mk_accessors(qw(binding left key right size));
 
