@@ -15,9 +15,10 @@ sub setup: Test(setup) {
     $self->{start} = Data::PSQueue::LTree->new;
 }
 
-sub constructors: Tests(2) {
+sub constructors: Tests(3) {
     new_ok('Data::PSQueue::LTree');
     isa_ok(Data::PSQueue::LTree->new, 'Data::PSQueue::LTree');
+    isa_ok(Data::PSQueue::LTree->new({}), 'Data::PSQueue::LTree');
 }
 
 sub null: Test {

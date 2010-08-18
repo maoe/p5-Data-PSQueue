@@ -143,6 +143,12 @@ sub insert_to_void: Tests(no_plan) {
 
 sub insert_to_winner: Tests(no_plan) {
     my $self = shift;
+    my $inserted = $self->{winner_a}->insert('b', 10);
+    isa_ok($inserted, 'Data::PSQueue');
+    $inserted = $self->{winner_a}->insert('c', 10);
+    isa_ok($inserted, 'Data::PSQueue');
+    $inserted = $self->{winner_a}->insert('d', 1000);
+    isa_ok($inserted, 'Data::PSQueue');
 }
 
 1;

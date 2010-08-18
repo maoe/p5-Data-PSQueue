@@ -15,12 +15,37 @@ sub setup: Test(setup) {
     my $self = shift;
     $self->{emptyq}  = Data::PSQueue->empty;
     $self->{singleq} = Data::PSQueue->singleton('key', 0);
+    $self->{someq}   = Data::PSQueue->from_hashref({
+        'key1' => 10,
+        'key2' => 1000,
+        'key3' => 0,
+        'key4' => 100
+    });
 }
 
-sub constructors: Tests(2) {
+sub constructors: Tests(11) {
     my $self = shift;
     isa_ok($self->{emptyq},  'Data::PSQueue');
     isa_ok($self->{singleq}, 'Data::PSQueue');
+
+    my $empty_hashq = Data::PSQueue->from_hashref;
+    isa_ok($empty_hashq, 'Data::PSQueue');
+    ok($empty_hashq->null);
+    is($empty_hashq->size, 0);
+
+    $empty_hashq = Data::PSQueue->from_hashref({});
+    isa_ok($empty_hashq, 'Data::PSQueue');
+    ok($empty_hashq->null);
+    is($empty_hashq->size, 0);
+
+    my $some_hashq = Data::PSQueue->from_hashref({
+        'key1' => 0,
+        'key2' => 100,
+        'key3' => 10
+    });
+    isa_ok($some_hashq, 'Data::PSQueue');
+    ok(!$some_hashq->null);
+    is($some_hashq->size, 3);
 }
 
 sub null: Tests(2) {
@@ -41,13 +66,43 @@ sub find_min_from_empty: Tests(1) {
     ok(!defined $min);
 }
 
-sub find_min_from_singleton: Tests(4) {
+sub find_min_from_singleton: Tests(5) {
     my $self = shift;
-    my $min = $self->{singleq}->find_min;
-    ok(defined $min);
+    # my $min = $self->{singleq}->find_min;
+    my $min = Data::PSQueue->singleton('key', 0)->find_min;
     isa_ok($min, 'Data::PSQueue::Binding');
     is($min->key, 'key');
     is($min->prio, 0);
+    ok(!$self->{singleq}->null);
+    is($self->{singleq}->size, 1);
+}
+
+sub delete_min_from_empty: Tests(3) {
+    my $self = shift;
+    my $min = $self->{emptyq}->delete_min;
+    is($min, undef);
+    ok($self->{emptyq}->null);
+    is($self->{emptyq}->size, 0);
+}
+
+sub delete_min_from_singleton: Tests(5) {
+    my $self = shift;
+    my $min = $self->{singleq}->delete_min;
+    isa_ok($min, 'Data::PSQueue::Binding');
+    is($min->key, 'key');
+    is($min->prio, 0);
+    ok($self->{singleq}->null);
+    is($self->{singleq}->size, 0);
+}
+
+sub delete_min_from_someq: Tests(no_plan) {
+    my $self = shift;
+    my $min = $self->{someq}->delete_min;
+    isa_ok($min, 'Data::PSQueue::Binding');
+    is($min->key, 'key3');
+    is($min->prio, 0);
+    ok(!$self->{someq}->null);
+    is($self->{someq}->size, 3);
 }
 
 sub lookup_from_empty: Tests(1) {
