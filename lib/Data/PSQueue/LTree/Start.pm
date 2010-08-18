@@ -1,13 +1,22 @@
-package Data::PSQueue::Binding;
+package Data::PSQueue::LTree::Start;
 use strict;
 use warnings;
-use Class::InsideOut qw(:std new);
+use base qw(Data::PSQueue::LTree);
+use Class::InsideOut qw(register id);
 
-readonly key  => my %key;
-readonly prio => my %prio;
+sub new {
+    register(shift);
+}
+
+sub null {
+    return 1;
+}
+
+sub size {
+    return 0;
+}
 
 1;
-
 __END__
 
 =head1 NAME
@@ -22,10 +31,9 @@ This document describes Data::PSQueue version 0.0.1
 
 =head1 SYNOPSIS
 
-    use Data::PSQueue::Binding;
-    my $binding = Data::PSQueue::Binding->new('key', 10);
-    $binding->key;    # => 'key'
-    $binding->prio;   # => 10
+    use Data::PSQueue;
+    my $q = Data::PSQueue->empty;
+    my $q = Data::PSQueue->singleton("item", 0);
 
 =head1 DESCRIPTION
 
@@ -38,15 +46,19 @@ This document describes Data::PSQueue version 0.0.1
 
 =head2 new
 
-    my $q = Data::PSQueue->empty;
-
-Creates an empty priority search queue.
-
 =head1 OBJECT METHODS
 
-=head2 key
+=head2 null
 
-=head2 prio
+    $q->null; # 1 or 0
+
+Tests the queue is empty or not.
+
+=head2 size
+
+    $q->size;
+
+Returns a number of elements of the queue.
 
 =head1 DIAGNOSTICS
 

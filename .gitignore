@@ -1,4 +1,10 @@
+Build
 Makefile
 Makefile.old
 blib
 pm_to_blib
+_build
+MANIFEST
+MYMETA.yml
+benchmarking/
+bin/

@@ -1,18 +1,69 @@
-package Data::PSQueue::Binding;
+package Data::PSQueue::Void;
 use strict;
 use warnings;
-use Class::InsideOut qw(:std new);
+use Class::InsideOut qw(:std);
+use base qw(Data::PSQueue);
 
-readonly key  => my %key;
-readonly prio => my %prio;
+### CONSTRUCTORS
+sub new {
+    return register(shift);
+}
+
+### METHODS
+sub null {
+    return 1;
+}
+
+sub size {
+    return 0;
+}
+
+sub find_min {
+    return;
+}
+
+sub delete_min {
+    return (shift);
+}
+
+sub lookup {
+    return;
+}
+
+# insert :: Void -> (k :-> p) -> Winner
+sub insert {
+    my ($self, $key, $prio) = @_;
+    return Data::PSQueue::Winner->new({
+        binding => Data::PSQueue::Binding->new({
+            key  => $key,
+            prio => $prio
+        }),
+        ltree   => Data::PSQueue::LTree->new,
+        max_key => $key
+    });
+}
+
+# delete :: Void -> k -> Void
+sub delete {
+    return shift;
+}
+
+# to_array :: Void -> [k :-> p]
+sub to_array {
+    return ();
+}
+
+# _play :: Void -> (Void|Winner) -> (Void|Winner)
+sub _play {
+    return $_[1];
+}
 
 1;
-
 __END__
 
 =head1 NAME
 
-Data::PSQueue - [One line description of module's purpose here]
+Data::PSQueue::Void - [One line description of module's purpose here]
 
 
 =head1 VERSION
@@ -22,10 +73,9 @@ This document describes Data::PSQueue version 0.0.1
 
 =head1 SYNOPSIS
 
-    use Data::PSQueue::Binding;
-    my $binding = Data::PSQueue::Binding->new('key', 10);
-    $binding->key;    # => 'key'
-    $binding->prio;   # => 10
+    use Data::PSQueue;
+    my $q = Data::PSQueue->empty;
+    my $q = Data::PSQueue->singleton("item", 0);
 
 =head1 DESCRIPTION
 
@@ -38,15 +88,47 @@ This document describes Data::PSQueue version 0.0.1
 
 =head2 new
 
+Data::PSQueue is an abstract data structure. This interface may be changed
+in future versions. Therefore DO NOT depend on it. Use C<empty>, C<singleton>
+or C<from_array> to construct a queue.
+
+=head2 empty
+
     my $q = Data::PSQueue->empty;
 
 Creates an empty priority search queue.
 
-=head1 OBJECT METHODS
+=head2 singleton($key, $priority)
 
-=head2 key
+    my $q = Data::PSQueue->empty;
 
-=head2 prio
+=head2 from_hash(%hash)
+
+=head1 METHODS
+
+=head2 null
+
+    $q->null; # 1 or 0
+
+Tests the queue is empty or not.
+
+=head2 size
+
+    $q->size;
+
+Returns a number of elements of the queue.
+
+=head2 find_min
+
+=head2 delete_min
+
+=head2 lookup($key)
+
+=head2 insert($key, $prio)
+
+=head2 delete($key)
+
+=head2 to_array
 
 =head1 DIAGNOSTICS
 
