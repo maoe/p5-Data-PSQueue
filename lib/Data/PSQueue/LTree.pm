@@ -20,10 +20,6 @@ sub new {
 }
 
 ### METHODS
-sub null {
-    $letter{ id shift }->null;
-}
-
 sub size {
     $letter{ id shift }->size;
 }

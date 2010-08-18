@@ -21,10 +21,6 @@ sub new {
     return $self;
 }
 
-sub null {
-    return 0;
-}
-
 1;
 __END__
 

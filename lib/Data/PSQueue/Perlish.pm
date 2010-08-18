@@ -1,93 +1,24 @@
-package Data::PSQueue;
+package Data::PSQueue::Perlish;
 use strict;
 use warnings;
-
-use version;
-our $VERSION = qv(0.0.0);
-
 use Class::InsideOut qw(:std);
 use Data::PSQueue::Void;
 use Data::PSQueue::Winner;
-use Data::PSQueue::LTree;
-use Data::PSQueue::Binding;
 
 private letter => my %letter;
 
-### CONSTRUCTORS
-sub empty {
+sub new {
     my $self = register(shift);
-    $letter{ id $self } = Data::PSQueue::Void->new;
-    return $self;
-}
-
-sub singleton {
-    my ($class, $key, $prio) = @_;
-    my $self = register($class);
-    $letter{ id $self } = Data::PSQueue::Winner->new({
-        binding => Data::PSQueue::Binding->new({ key => $key, prio => $prio }),
-        ltree   => Data::PSQueue::LTree->new,
-        max_key => $key
-    });
-    return $self;
-}
-
-sub from_hashref {
-    my $self = register(shift);
-    my $hashref = shift;
-    if (defined $hashref && scalar(keys %$hashref) > 0) {
-        $letter{ id $self } = Data::PSQueue::Void->new;
-        while (my ($k, $p) = each (%$hashref)) {
-            $self->insert($k, $p);
-        }
+    if (defined $_[0] && scalar(keys %{$_[0]}) > 0) {
+        $letter{ id $self } = Data::PSQueue::Winner->new(shift);
     } else {
         $letter{ id $self } = Data::PSQueue::Void->new;
     }
     return $self;
 }
 
-### METHODS
-sub null {
-    return $letter{ id shift }->null;
-}
-
-sub size {
-    return $letter{ id shift }->size;
-}
-
-sub find_min {
-    return $letter{ id shift }->find_min;
-}
-
-sub delete_min {
-    my $self = shift;
-    my ($letter, $min) = $letter{ id $self }->delete_min;
-    $letter{ id $self } = $letter;
-    return $min;
-}
-
-sub lookup {
-    return $letter{ id shift }->lookup(shift);
-}
-
-sub insert {
-    my ($self, $key, $prio) = @_;
-    $letter{ id $self } = $letter{ id $self }->insert($key, $prio);
-    return $self;
-}
-
-sub delete {
-    my $self = shift;
-    $letter{ id $self } = $letter{ id $self }->delete(shift);
-    return $self;
-}
-
-sub to_array {
-    return $letter{ id shift }->to_array;
-}
-
 1;
 __END__
-
 =head1 NAME
 
 Data::PSQueue - [One line description of module's purpose here]
@@ -113,50 +44,7 @@ This document describes Data::PSQueue version 0.0.1
 
 =head1 CONSTRUCTORS
 
-=head2 empty
-
-    my $q = Data::PSQueue->empty;
-
-Creates an empty priority search queue.
-
-=head2 singleton
-
-    my $q = Data::PSQueue->singleton('key', 0);
-
-Create a priority search queue which contains a given binding.
-
-=head2 from_hashref
-
-    my $q = Data::PSQueue->from_hashref({ 'key1' => 0, 'key2' => 100 });
-
-Create a priority search queue which contains elements that gave
-as the hash reference.
-
-=head1 METHODS
-
-=head2 null
-
-    $q->null; # 1 or 0
-
-Tests the queue is empty or not.
-
-=head2 size
-
-    $q->size;
-
-Returns a number of elements of the queue.
-
-=head2 find_min
-
-=head2 delete_min
-
-=head2 lookup($key)
-
-=head2 insert($key, $prio)
-
-=head2 delete($key)
-
-=head2 to_array
+=head2 new
 
 =head1 DIAGNOSTICS
 

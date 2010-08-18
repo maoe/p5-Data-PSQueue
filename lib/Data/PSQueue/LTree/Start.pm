@@ -2,18 +2,14 @@ package Data::PSQueue::LTree::Start;
 use strict;
 use warnings;
 use base qw(Data::PSQueue::LTree);
-use Class::InsideOut qw(register id);
+use Class::InsideOut qw(readonly register id);
+
+readonly size => my %size;
 
 sub new {
-    register(shift);
-}
-
-sub null {
-    return 1;
-}
-
-sub size {
-    return 0;
+    my $self = register(shift);
+    $size{ id $self } = 0;
+    return $self;
 }
 
 1;

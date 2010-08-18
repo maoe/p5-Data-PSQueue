@@ -285,26 +285,26 @@ sub to_array {
 # _play :: Winner -> (Void|Winner) -> Winner
 sub _play {
     my ($self, $other) = @_;
-    if ($other->null) {
-        # do nothing
-    } elsif ($self->binding->prio <= $other->binding->prio) {
-        $binding{ id $self } = $self->binding;
-        $ltree{ id $self } = Data::PSQueue::LTree->new({
-            binding => $other->binding,
-            left    => $self->ltree,
-            key     => $self->max_key,
-            right   => $other->ltree
-        });
-        $max_key{ id $self } = $other->max_key;
-    } else {
-        $ltree{ id $self } = Data::PSQueue::LTree->new({
-            binding => $self->binding,
-            left    => $self->ltree,
-            key     => $self->max_key,
-            right   => $other->ltree
-        });
-        $binding{ id $self } = $other->binding; # This statement must be here because of a destructive assignment.
-        $max_key{ id $self } = $other->max_key;
+    unless ($other->null) {
+        if ($self->binding->prio <= $other->binding->prio) {
+            $binding{ id $self } = $self->binding;
+            $ltree{ id $self } = Data::PSQueue::LTree->new({
+                binding => $other->binding,
+                left    => $self->ltree,
+                key     => $self->max_key,
+                right   => $other->ltree
+            });
+            $max_key{ id $self } = $other->max_key;
+        } else {
+            $ltree{ id $self } = Data::PSQueue::LTree->new({
+                binding => $self->binding,
+                left    => $self->ltree,
+                key     => $self->max_key,
+                right   => $other->ltree
+            });
+            $binding{ id $self } = $other->binding; # This statement must be here because of a destructive assignment.
+            $max_key{ id $self } = $other->max_key;
+        }
     }
     return $self;
 }
